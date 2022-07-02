@@ -26,6 +26,11 @@ contract MultiSig {
         _;
     }
 
+    modifier existsTx(uint256 _txId) {
+        require(_txId < transactions.length, "invalid tx ID");
+        _;
+    }
+
     constructor(address[] memory _owners, uint256 _threshold) {
         require(_owners.length > 0, "no owners given");
         require(_threshold <= _owners.length, "threshold bigger than total owners");
@@ -57,13 +62,12 @@ contract MultiSig {
         emit Submit(transactions.length - 1);
     }
 
-    function approve(uint256 _txId) external onlyOwner {
-        require(_txId < transactions.length, "invalid tx ID");
+    function approve(uint256 _txId) external onlyOwner existsTx(_txId) {
         approvals[_txId][msg.sender] = true;
         emit Approve(msg.sender, _txId);
     }
 
-    function revoke(uint256 _txId) external onlyOwner {
+    function revoke(uint256 _txId) external onlyOwner existsTx(_txId) {
         approvals[_txId][msg.sender] = false;
         emit Revoke(msg.sender, _txId);
     }
