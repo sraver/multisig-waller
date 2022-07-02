@@ -84,7 +84,7 @@ contract MultiSig {
         emit Revoke(msg.sender, _txId);
     }
 
-    function execute(uint256 _txId) external onlyOwner enoughApprovals(_txId) {
+    function execute(uint256 _txId) external onlyOwner existsTx(_txId) enoughApprovals(_txId) {
         Transaction storage transaction = transactions[_txId];
 
         (bool success,) = transaction.to.call{value : transaction.value}(transaction.data);
