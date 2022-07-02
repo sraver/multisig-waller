@@ -57,8 +57,8 @@ contract MultiSig {
     }
 
     function approve(uint256 _txId) external onlyOwner {
+        require(_txId < transactions.length, "invalid tx ID");
         approvals[_txId][msg.sender] = true;
-
         emit Approve(msg.sender, _txId);
     }
 

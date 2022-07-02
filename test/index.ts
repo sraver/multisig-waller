@@ -166,11 +166,26 @@ describe("Multi-Sig wallet", function () {
       });
 
       it("Should fail if an owner tries to approve a non-existing transaction", async function () {
-        // pass
+        // Arrange
+        const [owner, random1] = await ethers.getSigners();
+        await contract.connect(random1).submit(owner.address, 1, '0x');
+
+        // Act
+        const tx = contract.connect(random1).approve(1)
+
+        // Assert
+        await expect(tx).to.revertedWith("invalid tx ID");
       });
 
       it("Should fail if anyone else tries to approve an existing transaction", async function () {
-        // pass
+        // Arrange
+        const [owner] = await ethers.getSigners();
+
+        // Act
+        const tx = contract.connect(owner).approve(0);
+
+        // Assert
+        await expect(tx).to.revertedWith("address not allowed");
       });
     });
 
