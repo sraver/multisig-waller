@@ -8,12 +8,12 @@ describe("Multi-Sig wallet", function () {
   describe("Initialize", function () {
     it("Should construct and have the correct owners and required arguments", async function () {
       // Arrange
-      const [owner, random1, random2] = await ethers.getSigners();
+      const [deployer, owner1, owner2] = await ethers.getSigners();
 
       // Act
       const contract = await (await MultiSigFactory).deploy([
-        random1.address,
-        random2.address,
+        owner1.address,
+        owner2.address,
       ], 2);
 
       await contract.deployed();
@@ -23,8 +23,8 @@ describe("Multi-Sig wallet", function () {
 
       // Assert
       expect(owners).to.deep.equal([
-        random1.address,
-        random2.address,
+        owner1.address,
+        owner2.address,
       ])
       expect(threshold).to.equal(2);
     });
@@ -39,11 +39,11 @@ describe("Multi-Sig wallet", function () {
 
     it("Should fail to construct if some owner has zero address", async function () {
       // Arrange
-      const [owner, random] = await ethers.getSigners();
+      const [deployer, owner1] = await ethers.getSigners();
 
       // Act
       const deployTx = (await MultiSigFactory).deploy([
-        random.address,
+        owner1.address,
         ethers.constants.AddressZero
       ], 0);
 
@@ -53,12 +53,12 @@ describe("Multi-Sig wallet", function () {
 
     it("Should fail to construct if the threshold is higher than the given owners", async function () {
       // Arrange
-      const [owner, random1, random2] = await ethers.getSigners();
+      const [deployer, owner1, owner2] = await ethers.getSigners();
 
       // Act
       const deployTx = (await MultiSigFactory).deploy([
-        random1.address,
-        random2.address,
+        owner1.address,
+        owner2.address,
       ], 3);
 
       // Assert
@@ -70,11 +70,11 @@ describe("Multi-Sig wallet", function () {
     let contract: Contract;
 
     beforeEach(async () => {
-      const [owner, random1, random2, random3] = await ethers.getSigners();
+      const [deployer, owner1, owner2, owner3] = await ethers.getSigners();
       contract = await (await MultiSigFactory).deploy([
-        random1.address,
-        random2.address,
-        random3.address,
+        owner1.address,
+        owner2.address,
+        owner3.address,
       ], 2);
       await contract.deployed();
     });
@@ -82,11 +82,11 @@ describe("Multi-Sig wallet", function () {
     describe("Deposit", function () {
       it("Should allow anyone to deposit ether", async function () {
         // Arrange
-        const [owner] = await ethers.getSigners();
+        const [deployer] = await ethers.getSigners();
         const amount = ethers.utils.parseEther("1.0");
 
         // Act
-        const tx = owner.sendTransaction({
+        const tx = deployer.sendTransaction({
           to: contract.address,
           value: amount,
         });
@@ -94,17 +94,17 @@ describe("Multi-Sig wallet", function () {
         // Assert
         await expect(tx)
           .to.emit(contract, "Deposit")
-          .withArgs(owner.address, amount);
+          .withArgs(deployer.address, amount);
       });
     });
 
     describe("Submit", function () {
       it("Should allow an owner to submit a new transaction", async function () {
         // Arrange
-        const [owner, random1] = await ethers.getSigners();
+        const [deployer, owner1] = await ethers.getSigners();
 
         // Act
-        const tx = contract.connect(random1).submit(owner.address, 1, '0x');
+        const tx = contract.connect(owner1).submit(deployer.address, 1, '0x');
 
         // Assert
         await expect(tx)
@@ -114,10 +114,10 @@ describe("Multi-Sig wallet", function () {
 
       it("Should fail to submit a transaction if destination address is zero", async function () {
         // Arrange
-        const [owner, random1] = await ethers.getSigners();
+        const [deployer, owner1] = await ethers.getSigners();
 
         // Act
-        const tx = contract.connect(random1).submit(ethers.constants.AddressZero, 1, '0x');
+        const tx = contract.connect(owner1).submit(ethers.constants.AddressZero, 1, '0x');
 
         // Assert
         await expect(tx).to.revertedWith("destination address not allowed")
@@ -125,10 +125,10 @@ describe("Multi-Sig wallet", function () {
 
       it("Should fail to submit a transaction without value or data", async function () {
         // Arrange
-        const [owner, random1] = await ethers.getSigners();
+        const [deployer, owner1] = await ethers.getSigners();
 
         // Act
-        const tx = contract.connect(random1).submit(owner.address, 0, '0x');
+        const tx = contract.connect(owner1).submit(deployer.address, 0, '0x');
 
         // Assert
         await expect(tx).to.revertedWith("should have value or data")
@@ -136,10 +136,10 @@ describe("Multi-Sig wallet", function () {
 
       it("Should fail if anyone else submits a new transaction", async function () {
         // Arrange
-        const [owner, random1] = await ethers.getSigners();
+        const [deployer, owner1] = await ethers.getSigners();
 
         // Act
-        const tx = contract.connect(owner).submit(random1.address, 1, '0x');
+        const tx = contract.connect(deployer).submit(owner1.address, 1, '0x');
 
         // Assert
         await expect(tx).to.revertedWith("address not allowed");
@@ -149,33 +149,33 @@ describe("Multi-Sig wallet", function () {
     describe("Approve", function () {
       it("Should allow an owner to approve an existing transaction", async function () {
         // Arrange
-        const [owner, random1] = await ethers.getSigners();
-        await contract.connect(random1).submit(owner.address, 1, '0x');
+        const [deployer, owner1] = await ethers.getSigners();
+        await contract.connect(owner1).submit(deployer.address, 1, '0x');
 
         // Act
-        const tx = contract.connect(random1).approve(0)
+        const tx = contract.connect(owner1).approve(0)
 
         // Assert
         await expect(tx)
           .to.emit(contract, "Approve")
-          .withArgs(random1.address, 0);
+          .withArgs(owner1.address, 0);
       });
 
       it("Should fail if an owner tries to approve an executed transaction", async function () {
         // Arrange
-        const [owner, random1, random2, random3] = await ethers.getSigners();
+        const [deployer, owner1, owner2, owner3] = await ethers.getSigners();
         const amount = ethers.utils.parseEther("1.0");
-        await owner.sendTransaction({
+        await deployer.sendTransaction({
           to: contract.address,
           value: amount,
         });
-        await contract.connect(random1).submit(owner.address, amount, '0x');
-        await contract.connect(random1).approve(0);
-        await contract.connect(random2).approve(0);
-        await contract.connect(random2).execute(0);
+        await contract.connect(owner1).submit(deployer.address, amount, '0x');
+        await contract.connect(owner1).approve(0);
+        await contract.connect(owner2).approve(0);
+        await contract.connect(owner2).execute(0);
 
         // Act
-        const tx = contract.connect(random3).approve(0)
+        const tx = contract.connect(owner3).approve(0)
 
         // Assert
         await expect(tx).to.revertedWith("already executed");
@@ -183,11 +183,11 @@ describe("Multi-Sig wallet", function () {
 
       it("Should fail if an owner tries to approve a non-existing transaction", async function () {
         // Arrange
-        const [owner, random1] = await ethers.getSigners();
-        await contract.connect(random1).submit(owner.address, 1, '0x');
+        const [deployer, owner1] = await ethers.getSigners();
+        await contract.connect(owner1).submit(deployer.address, 1, '0x');
 
         // Act
-        const tx = contract.connect(random1).approve(1)
+        const tx = contract.connect(owner1).approve(1)
 
         // Assert
         await expect(tx).to.revertedWith("invalid tx ID");
@@ -195,10 +195,10 @@ describe("Multi-Sig wallet", function () {
 
       it("Should fail if anyone else tries to approve an existing transaction", async function () {
         // Arrange
-        const [owner] = await ethers.getSigners();
+        const [deployer] = await ethers.getSigners();
 
         // Act
-        const tx = contract.connect(owner).approve(0);
+        const tx = contract.connect(deployer).approve(0);
 
         // Assert
         await expect(tx).to.revertedWith("address not allowed");
@@ -208,34 +208,34 @@ describe("Multi-Sig wallet", function () {
     describe("Revoke", function () {
       it("Should allow an owner to revoke the an already approved transaction", async function () {
         // Arrange
-        const [owner, random1] = await ethers.getSigners();
-        await contract.connect(random1).submit(owner.address, 1, '0x');
-        await contract.connect(random1).approve(0);
+        const [deployer, owner1] = await ethers.getSigners();
+        await contract.connect(owner1).submit(deployer.address, 1, '0x');
+        await contract.connect(owner1).approve(0);
 
         // Act
-        const tx = contract.connect(random1).revoke(0)
+        const tx = contract.connect(owner1).revoke(0)
 
         // Assert
         await expect(tx)
           .to.emit(contract, "Revoke")
-          .withArgs(random1.address, 0);
+          .withArgs(owner1.address, 0);
       });
 
       it("Should fail if an owner tries to revoke an executed transaction", async function () {
         // Arrange
-        const [owner, random1, random2] = await ethers.getSigners();
+        const [deployer, owner1, owner2] = await ethers.getSigners();
         const amount = ethers.utils.parseEther("1.0");
-        await owner.sendTransaction({
+        await deployer.sendTransaction({
           to: contract.address,
           value: amount,
         });
-        await contract.connect(random1).submit(owner.address, amount, '0x');
-        await contract.connect(random1).approve(0);
-        await contract.connect(random2).approve(0);
-        await contract.connect(random2).execute(0);
+        await contract.connect(owner1).submit(deployer.address, amount, '0x');
+        await contract.connect(owner1).approve(0);
+        await contract.connect(owner2).approve(0);
+        await contract.connect(owner2).execute(0);
 
         // Act
-        const tx = contract.connect(random1).revoke(0)
+        const tx = contract.connect(owner1).revoke(0)
 
         // Assert
         await expect(tx).to.revertedWith("already executed");
@@ -243,10 +243,10 @@ describe("Multi-Sig wallet", function () {
 
       it("Should fail if an owner tries to revoke a non-existing transaction", async function () {
         // Arrange
-        const [owner, random1] = await ethers.getSigners();
+        const [deployer, owner1] = await ethers.getSigners();
 
         // Act
-        const tx = contract.connect(random1).revoke(0)
+        const tx = contract.connect(owner1).revoke(0)
 
         // Assert
         await expect(tx).to.revertedWith("invalid tx ID");
@@ -254,10 +254,10 @@ describe("Multi-Sig wallet", function () {
 
       it("Should fail if anyone else tries to revoke an already approved transaction", async function () {
         // Arrange
-        const [owner] = await ethers.getSigners();
+        const [deployer] = await ethers.getSigners();
 
         // Act
-        const tx = contract.connect(owner).revoke(0);
+        const tx = contract.connect(deployer).revoke(0);
 
         // Assert
         await expect(tx).to.revertedWith("address not allowed");
@@ -267,18 +267,18 @@ describe("Multi-Sig wallet", function () {
     describe("Execute", function () {
       it("Should allow an owner to execute a transaction with enough approvals", async function () {
         // Arrange
-        const [owner, random1, random2] = await ethers.getSigners();
+        const [deployer, owner1, owner2] = await ethers.getSigners();
         const amount = ethers.utils.parseEther("1.0");
-        await owner.sendTransaction({
+        await deployer.sendTransaction({
           to: contract.address,
           value: amount,
         });
-        await contract.connect(random1).submit(owner.address, amount, '0x');
-        await contract.connect(random1).approve(0);
-        await contract.connect(random2).approve(0);
+        await contract.connect(owner1).submit(deployer.address, amount, '0x');
+        await contract.connect(owner1).approve(0);
+        await contract.connect(owner2).approve(0);
 
         // Act
-        const tx = contract.connect(random1).execute(0)
+        const tx = contract.connect(owner1).execute(0)
 
         // Assert
         await expect(tx)
@@ -288,17 +288,17 @@ describe("Multi-Sig wallet", function () {
 
       it("Should fail if an owner tries execute a transaction with not enough approvals", async function () {
         // Arrange
-        const [owner, random1] = await ethers.getSigners();
+        const [deployer, owner1] = await ethers.getSigners();
         const amount = ethers.utils.parseEther("1.0");
-        await owner.sendTransaction({
+        await deployer.sendTransaction({
           to: contract.address,
           value: amount,
         });
-        await contract.connect(random1).submit(owner.address, amount, '0x');
-        await contract.connect(random1).approve(0);
+        await contract.connect(owner1).submit(deployer.address, amount, '0x');
+        await contract.connect(owner1).approve(0);
 
         // Act
-        const tx = contract.connect(random1).execute(0)
+        const tx = contract.connect(owner1).execute(0)
 
         // Assert
         await expect(tx).to.revertedWith("not enough approvals")
@@ -306,19 +306,19 @@ describe("Multi-Sig wallet", function () {
 
       it("Should fail if an owner tries execute a transaction already executed", async function () {
         // Arrange
-        const [owner, random1, random2] = await ethers.getSigners();
+        const [deployer, owner1, owner2] = await ethers.getSigners();
         const amount = ethers.utils.parseEther("1.0");
-        await owner.sendTransaction({
+        await deployer.sendTransaction({
           to: contract.address,
           value: amount,
         });
-        await contract.connect(random1).submit(owner.address, amount, '0x');
-        await contract.connect(random1).approve(0);
-        await contract.connect(random2).approve(0);
-        await contract.connect(random2).execute(0);
+        await contract.connect(owner1).submit(deployer.address, amount, '0x');
+        await contract.connect(owner1).approve(0);
+        await contract.connect(owner2).approve(0);
+        await contract.connect(owner2).execute(0);
 
         // Act
-        const tx = contract.connect(random1).execute(0)
+        const tx = contract.connect(owner1).execute(0)
 
         // Assert
         await expect(tx).to.revertedWith("already executed");
@@ -326,10 +326,10 @@ describe("Multi-Sig wallet", function () {
 
       it("Should fail if an owner tries execute a non-existing transaction", async function () {
         // Arrange
-        const [owner, random1] = await ethers.getSigners();
+        const [deployer, owner1] = await ethers.getSigners();
 
         // Act
-        const tx = contract.connect(random1).execute(0)
+        const tx = contract.connect(owner1).execute(0)
 
         // Assert
         await expect(tx).to.revertedWith("invalid tx ID");
@@ -337,10 +337,10 @@ describe("Multi-Sig wallet", function () {
 
       it("Should fail if anyone else tries to execute a transaction", async function () {
         // Arrange
-        const [owner] = await ethers.getSigners();
+        const [deployer] = await ethers.getSigners();
 
         // Act
-        const tx = contract.connect(owner).execute(0);
+        const tx = contract.connect(deployer).execute(0);
 
         // Assert
         await expect(tx).to.revertedWith("address not allowed");

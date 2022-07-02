@@ -18,7 +18,7 @@ contract MultiSig {
 
     address[] private owners;
     mapping(address => bool) private isOwner;
-    uint256 private threshold;
+    uint256 private approvalsThreshold;
     Transaction[] private transactions;
     mapping(uint256 => mapping(address => bool)) private approvals;
 
@@ -39,7 +39,7 @@ contract MultiSig {
                 totalApprovals++;
             }
         }
-        require(totalApprovals >= threshold, "not enough approvals");
+        require(totalApprovals >= approvalsThreshold, "not enough approvals");
         _;
     }
 
@@ -59,7 +59,7 @@ contract MultiSig {
             isOwner[_owners[index]] = true;
         }
 
-        threshold = _threshold;
+        approvalsThreshold = _threshold;
     }
 
     receive() external payable {
@@ -108,6 +108,6 @@ contract MultiSig {
     }
 
     function getThreshold() public view returns (uint256) {
-        return threshold;
+        return approvalsThreshold;
     }
 }
