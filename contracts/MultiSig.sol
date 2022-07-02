@@ -43,6 +43,11 @@ contract MultiSig {
         _;
     }
 
+    modifier notExecuted(uint256 _txId) {
+        require(!transactions[_txId].executed, "already executed");
+        _;
+    }
+
     constructor(address[] memory _owners, uint256 _threshold) {
         require(_owners.length > 0, "no owners given");
         require(_threshold <= _owners.length, "threshold bigger than total owners");
@@ -84,8 +89,10 @@ contract MultiSig {
         emit Revoke(msg.sender, _txId);
     }
 
-    function execute(uint256 _txId) external onlyOwner existsTx(_txId) enoughApprovals(_txId) {
+    function execute(uint256 _txId) external onlyOwner existsTx(_txId) notExecuted(_txId) enoughApprovals(_txId) {
         Transaction storage transaction = transactions[_txId];
+
+        transaction.executed = true;
 
         (bool success,) = transaction.to.call{value : transaction.value}(transaction.data);
 
