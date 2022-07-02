@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 
 describe("Multi-sig wallet", function () {
-  let MultiSigFactory = ethers.getContractFactory('MultiSig');
+  let MultiSigFactory = ethers.getContractFactory("MultiSig");
 
   describe("Initialize", function () {
     it("Should construct and have the correct owners and required arguments", async function () {
@@ -14,11 +14,21 @@ describe("Multi-sig wallet", function () {
       const deployTx = (await MultiSigFactory).deploy([], 0);
 
       // Assert
-      await expect(deployTx).to.revertedWith('no owners given');
+      await expect(deployTx).to.revertedWith("no owners given");
     });
 
     it("Should fail to construct if some owner has zero address", async function () {
-      // pass
+      // Arrange
+      const [owner, random] = await ethers.getSigners();
+
+      // Act
+      const deployTx = (await MultiSigFactory).deploy([
+        random.address,
+        ethers.constants.AddressZero
+      ], 0);
+
+      // Assert
+      await expect(deployTx).to.revertedWith("owner address not valid");
     });
 
     it("Should fail to construct if the threshold is higher than the given owners", async function () {
