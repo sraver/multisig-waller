@@ -6,6 +6,7 @@ contract MultiSig {
     event Deposit(address sender, uint256 amount);
     event Submit(uint256 txId);
     event Approve(address owner, uint256 txId);
+    event Revoke(address owner, uint256 txId);
 
     struct Transaction {
         address to;
@@ -60,6 +61,11 @@ contract MultiSig {
         require(_txId < transactions.length, "invalid tx ID");
         approvals[_txId][msg.sender] = true;
         emit Approve(msg.sender, _txId);
+    }
+
+    function revoke(uint256 _txId) external onlyOwner {
+        approvals[_txId][msg.sender] = false;
+        emit Revoke(msg.sender, _txId);
     }
 
     /** Accessors **/

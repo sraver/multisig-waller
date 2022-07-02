@@ -191,7 +191,18 @@ describe("Multi-Sig wallet", function () {
 
     describe("Revoke", function () {
       it("Should allow an owner to revoke the an already approved transaction", async function () {
-        // pass
+        // Arrange
+        const [owner, random1] = await ethers.getSigners();
+        await contract.connect(random1).submit(owner.address, 1, '0x');
+        await contract.connect(random1).approve(0);
+
+        // Act
+        const tx = contract.connect(random1).revoke(0)
+
+        // Assert
+        await expect(tx)
+          .to.emit(contract, "Revoke")
+          .withArgs(random1.address, 0);
       });
 
       it("Should fail if an owner tries to revoke an executed transaction", async function () {
