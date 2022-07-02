@@ -5,6 +5,7 @@ contract MultiSig {
 
     event Deposit(address sender, uint256 amount);
     event Submit(uint256 txId);
+    event Approve(address owner, uint256 txId);
 
     struct Transaction {
         address to;
@@ -17,6 +18,7 @@ contract MultiSig {
     mapping(address => bool) private isOwner;
     uint256 private threshold;
     Transaction[] private transactions;
+    mapping(uint256 => mapping(address => bool)) private approvals;
 
     modifier onlyOwner() {
         require(isOwner[msg.sender], "address not allowed");
@@ -52,6 +54,12 @@ contract MultiSig {
             executed : false
         }));
         emit Submit(transactions.length - 1);
+    }
+
+    function approve(uint256 _txId) external onlyOwner {
+        approvals[_txId][msg.sender] = true;
+
+        emit Approve(msg.sender, _txId);
     }
 
     /** Accessors **/

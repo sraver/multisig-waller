@@ -148,7 +148,17 @@ describe("Multi-Sig wallet", function () {
 
     describe("Approve", function () {
       it("Should allow an owner to approve an existing transaction", async function () {
-        // pass
+        // Arrange
+        const [owner, random1] = await ethers.getSigners();
+        await contract.connect(random1).submit(owner.address, 1, '0x');
+
+        // Act
+        const tx = contract.connect(random1).approve(0)
+
+        // Assert
+        await expect(tx)
+          .to.emit(contract, "Approve")
+          .withArgs(random1.address, 0);
       });
 
       it("Should fail if an owner tries to approve an executed transaction", async function () {
