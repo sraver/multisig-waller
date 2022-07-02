@@ -113,7 +113,14 @@ describe("Multi-Sig wallet", function () {
       });
 
       it("Should fail if anyone else submits a new transaction", async function () {
-        // pass
+        // Arrange
+        const [owner, random1] = await ethers.getSigners();
+
+        // Act
+        const tx = contract.connect(owner).submit(random1.address, 0, '0x');
+
+        // Assert
+        await expect(tx).to.revertedWith("address not allowed");
       });
     });
 

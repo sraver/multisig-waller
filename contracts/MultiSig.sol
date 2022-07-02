@@ -14,8 +14,14 @@ contract MultiSig {
     }
 
     address[] private owners;
+    mapping(address => bool) private isOwner;
     uint256 private threshold;
     Transaction[] private transactions;
+
+    modifier onlyOwner() {
+        require(isOwner[msg.sender], "address not allowed");
+        _;
+    }
 
     constructor(address[] memory _owners, uint256 _threshold) {
         require(_owners.length > 0, "no owners given");
@@ -25,6 +31,7 @@ contract MultiSig {
             require(_owners[index] != address(0), "owner address not valid");
 
             owners.push(_owners[index]);
+            isOwner[_owners[index]] = true;
         }
 
         threshold = _threshold;
@@ -34,7 +41,7 @@ contract MultiSig {
         emit Deposit(msg.sender, msg.value);
     }
 
-    function submit(address _to, uint256 _value, bytes calldata _data) external {
+    function submit(address _to, uint256 _value, bytes calldata _data) external onlyOwner {
         transactions.push(Transaction({
             to : _to,
             value : _value,
