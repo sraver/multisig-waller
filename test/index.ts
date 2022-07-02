@@ -104,7 +104,7 @@ describe("Multi-Sig wallet", function () {
         const [owner, random1] = await ethers.getSigners();
 
         // Act
-        const tx = contract.connect(random1).submit(owner.address, 0, '0x');
+        const tx = contract.connect(random1).submit(owner.address, 1, '0x');
 
         // Assert
         await expect(tx)
@@ -112,12 +112,34 @@ describe("Multi-Sig wallet", function () {
           .withArgs(0);
       });
 
+      it("Should fail to submit a transaction if destination address is zero", async function () {
+        // Arrange
+        const [owner, random1] = await ethers.getSigners();
+
+        // Act
+        const tx = contract.connect(random1).submit(ethers.constants.AddressZero, 1, '0x');
+
+        // Assert
+        await expect(tx).to.revertedWith("destination address not allowed")
+      });
+
+      it("Should fail to submit a transaction without value or data", async function () {
+        // Arrange
+        const [owner, random1] = await ethers.getSigners();
+
+        // Act
+        const tx = contract.connect(random1).submit(owner.address, 0, '0x');
+
+        // Assert
+        await expect(tx).to.revertedWith("should have value or data")
+      });
+
       it("Should fail if anyone else submits a new transaction", async function () {
         // Arrange
         const [owner, random1] = await ethers.getSigners();
 
         // Act
-        const tx = contract.connect(owner).submit(random1.address, 0, '0x');
+        const tx = contract.connect(owner).submit(random1.address, 1, '0x');
 
         // Assert
         await expect(tx).to.revertedWith("address not allowed");

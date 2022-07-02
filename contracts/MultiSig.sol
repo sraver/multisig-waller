@@ -42,6 +42,9 @@ contract MultiSig {
     }
 
     function submit(address _to, uint256 _value, bytes calldata _data) external onlyOwner {
+        require(_to != address(0), "destination address not allowed");
+        require(_value > 0 || _data.length > 0, "should have value or data");
+
         transactions.push(Transaction({
             to : _to,
             value : _value,
