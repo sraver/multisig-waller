@@ -1,4 +1,8 @@
+import { ethers } from "hardhat";
+import { expect } from "chai";
+
 describe("Multi-sig wallet", function () {
+  let MultiSigFactory = ethers.getContractFactory('MultiSig');
 
   describe("Initialize", function () {
     it("Should construct and have the correct owners and required arguments", async function () {
@@ -6,7 +10,11 @@ describe("Multi-sig wallet", function () {
     });
 
     it("Should fail to construct if no owners are given", async function () {
-      // pass
+      // Act
+      const deployTx = (await MultiSigFactory).deploy([], 0);
+
+      // Assert
+      await expect(deployTx).to.revertedWith('no owners given');
     });
 
     it("Should fail to construct if some owner has zero address", async function () {
