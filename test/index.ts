@@ -100,7 +100,16 @@ describe("Multi-Sig wallet", function () {
 
     describe("Submit", function () {
       it("Should allow an owner to submit a new transaction", async function () {
-        // pass
+        // Arrange
+        const [owner, random1] = await ethers.getSigners();
+
+        // Act
+        const tx = contract.connect(random1).submit(owner.address, 0, '0x');
+
+        // Assert
+        await expect(tx)
+          .to.emit(contract, "Submit")
+          .withArgs(0);
       });
 
       it("Should fail if anyone else submits a new transaction", async function () {
