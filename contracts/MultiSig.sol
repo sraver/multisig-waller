@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 contract MultiSig {
 
+    event Deposit(address sender, uint256 amount);
+
     address[] private owners;
     uint private threshold;
 
@@ -18,6 +20,12 @@ contract MultiSig {
 
         threshold = _threshold;
     }
+
+    receive() external payable {
+        emit Deposit(msg.sender, msg.value);
+    }
+
+    /** Accessors **/
 
     function getOwners() public view returns (address[] memory) {
         return owners;

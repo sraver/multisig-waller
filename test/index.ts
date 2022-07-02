@@ -1,5 +1,6 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
+import { Contract } from "ethers";
 
 describe("Multi-Sig wallet", function () {
   let MultiSigFactory = ethers.getContractFactory("MultiSig");
@@ -66,9 +67,34 @@ describe("Multi-Sig wallet", function () {
   });
 
   describe("Management", function () {
+    let contract: Contract;
+
+    beforeEach(async () => {
+      const [owner, random1, random2, random3] = await ethers.getSigners();
+      contract = await (await MultiSigFactory).deploy([
+        random1.address,
+        random2.address,
+        random3.address,
+      ], 2);
+      await contract.deployed();
+    });
+
     describe("Deposit", function () {
-      it("Should allow anyone to deposit ether and emit an event", async function () {
-        // pass
+      it("Should allow anyone to deposit ether", async function () {
+        // Arrange
+        const [owner] = await ethers.getSigners();
+        const amount = ethers.utils.parseEther("1.0");
+
+        // Act
+        const tx = owner.sendTransaction({
+          to: contract.address,
+          value: amount,
+        });
+
+        // Assert
+        await expect(tx)
+          .to.emit(contract, "Deposit")
+          .withArgs(owner.address, amount);
       });
     });
 
