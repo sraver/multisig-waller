@@ -7,6 +7,7 @@ contract MultiSig {
     event Submit(uint256 txId);
     event Approve(address owner, uint256 txId);
     event Revoke(address owner, uint256 txId);
+    event Execute(uint256 txId);
 
     struct Transaction {
         address to;
@@ -70,6 +71,16 @@ contract MultiSig {
     function revoke(uint256 _txId) external onlyOwner existsTx(_txId) {
         approvals[_txId][msg.sender] = false;
         emit Revoke(msg.sender, _txId);
+    }
+
+    function execute(uint256 _txId) external onlyOwner {
+        Transaction storage transaction = transactions[_txId];
+
+        (bool success,) = transaction.to.call{value : transaction.value}(transaction.data);
+
+        require(success, "tx failed");
+
+        emit Execute(_txId);
     }
 
     /** Accessors **/

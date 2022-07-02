@@ -234,7 +234,24 @@ describe("Multi-Sig wallet", function () {
 
     describe("Execute", function () {
       it("Should allow an owner to execute a transaction with enough approvals", async function () {
-        // pass
+        // Arrange
+        const [owner, random1, random2] = await ethers.getSigners();
+        const amount = ethers.utils.parseEther("1.0");
+        await owner.sendTransaction({
+          to: contract.address,
+          value: amount,
+        });
+        await contract.connect(random1).submit(owner.address, amount, '0x');
+        await contract.connect(random1).approve(0);
+        await contract.connect(random2).approve(0);
+
+        // Act
+        const tx = contract.connect(random1).execute(0)
+
+        // Assert
+        await expect(tx)
+          .to.emit(contract, "Execute")
+          .withArgs(0);
       });
 
       it("Should fail if an owner tries execute a transaction with not enough approvals", async function () {
