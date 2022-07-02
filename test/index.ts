@@ -1,12 +1,31 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 
-describe("Multi-sig wallet", function () {
+describe("Multi-Sig wallet", function () {
   let MultiSigFactory = ethers.getContractFactory("MultiSig");
 
   describe("Initialize", function () {
     it("Should construct and have the correct owners and required arguments", async function () {
-      // pass
+      // Arrange
+      const [owner, random1, random2] = await ethers.getSigners();
+
+      // Act
+      const contract = await (await MultiSigFactory).deploy([
+        random1.address,
+        random2.address,
+      ], 2);
+
+      await contract.deployed();
+
+      const owners = await contract.getOwners();
+      const threshold = await contract.getThreshold();
+
+      // Assert
+      expect(owners).to.deep.equal([
+        random1.address,
+        random2.address,
+      ])
+      expect(threshold).to.equal(2);
     });
 
     it("Should fail to construct if no owners are given", async function () {
