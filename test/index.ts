@@ -32,7 +32,17 @@ describe("Multi-sig wallet", function () {
     });
 
     it("Should fail to construct if the threshold is higher than the given owners", async function () {
-      // pass
+      // Arrange
+      const [owner, random1, random2] = await ethers.getSigners();
+
+      // Act
+      const deployTx = (await MultiSigFactory).deploy([
+        random1.address,
+        random2.address,
+      ], 3);
+
+      // Assert
+      await expect(deployTx).to.revertedWith("threshold bigger than total owners");
     });
   });
 
