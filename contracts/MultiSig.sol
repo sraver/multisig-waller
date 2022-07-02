@@ -79,12 +79,12 @@ contract MultiSig {
         emit Submit(transactions.length - 1);
     }
 
-    function approve(uint256 _txId) external onlyOwner existsTx(_txId) {
+    function approve(uint256 _txId) external onlyOwner existsTx(_txId) notExecuted(_txId) {
         approvals[_txId][msg.sender] = true;
         emit Approve(msg.sender, _txId);
     }
 
-    function revoke(uint256 _txId) external onlyOwner existsTx(_txId) {
+    function revoke(uint256 _txId) external onlyOwner existsTx(_txId) notExecuted(_txId) {
         approvals[_txId][msg.sender] = false;
         emit Revoke(msg.sender, _txId);
     }
